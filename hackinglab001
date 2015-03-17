@@ -1,0 +1,39 @@
+/*
+this is hackinglab test script:
+so you can use it by yourself
+who care? 
+time：2015年3月17日
+*/
+
+#-*- coding:utf-8 –*-
+import re
+import urllib
+import urllib2
+import cookielib
+import string
+
+# 会话保持操作
+#cookie set
+cj = cookielib.LWPCookieJar()
+cookie_support = urllib2.HTTPCookieProcessor(cj)
+opener = urllib2.build_opener(cookie_support,urllib2.HTTPHandler)
+urllib2.install_opener(opener)
+
+url = 'http://lab1.xseclab.com/xss2_0d557e6d2a4ac08b749b61473a075be1/index.php'
+web = urllib2.urlopen(url)
+rep = web.read()
+phonepattern = re.compile(r'(\d{1,5})\D(\d{1,5})\D(\d{1,5})\D+(\d{1,5})\D(\d{1,5})\D') #
+d = phonepattern.search(rep).groups()			#获得表达式
+b = [int(elem) for elem in d]					#计算值
+#print b
+c = b[0]*b[1]+b[2]*(b[3]+b[4])
+
+#  post
+headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36',} 
+postData = {'v':c}
+postData = urllib.urlencode(postData)
+request = urllib2.Request(url,postData,headers)		#装载
+response = urllib2.urlopen(request)
+text = response.read()
+text = unicode(text,'utf-8').encode('cp936')
+print text
