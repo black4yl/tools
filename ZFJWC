@@ -1,0 +1,88 @@
+/*
+这事ZF教务处 登录抓取课表用的脚本
+use : python pyname StuNum password
+*/
+
+#-*- coding:utf-8 –*-
+import random
+import urllib2
+import urllib
+import cookielib #cookie
+import re
+import sys
+import httplib
+from bs4 import BeautifulSoup #网页分析
+
+# http://jwc.xxxxxxxxx.edu.cn:8989/default_ysdx.aspx
+
+Url = 'http://jwc.xxxxxxxxx.edu.cn:8989'
+JWC_URL = 'http://jwc.xxxxxxxxx.edu.cn:8989/default_ysdx.aspx'
+
+# 请求头
+headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36',} 
+
+__VIEWSTATE = 'dDw1MjQ2ODMxNzY7Oz5D%2Bg8m3xz0waWS8MQq%2BFXXWakzmg%3D%3D'
+__VIEWSTATEGENERATOR = '701681CC'
+
+def getCourseTable(_user,_pass):
+	TextBox1 = _user
+	TextBox2 = _pass
+
+	RadioButtonList1 = '%D1%A7%C9%FA' #GBK
+	Button1 = '++%B5%C7%C2%BC++' #gbk
+
+	post_data='__VIEWSTATE='+__VIEWSTATE+'&__VIEWSTATEGENERATOR='+ __VIEWSTATEGENERATOR+'&TextBox1='+ TextBox1+'&TextBox2='+ TextBox2+'&RadioButtonList1=' + RadioButtonList1+'&Button1='+ Button1
+
+	# 开启cookie
+	cj = cookielib.LWPCookieJar()	  #管理 cookie
+	cookie_support = urllib2.HTTPCookieProcessor(cj)
+	opener = urllib2.build_opener(cookie_support,urllib2.HTTPHandler)
+	urllib2.install_opener(opener)
+
+	request = urllib2.Request(JWC_URL,post_data,headers)
+	#print request.get_data()
+	response = urllib2.urlopen(request)
+	text = response.read()
+	#print text 
+	xh = 'xh='+TextBox1
+	sc = re.compile(xh)
+	if(sc.search(text) == None):
+		print 'error !'
+		exit()
+	print '---------------Login Success-----------------'
+	url = Url + '/xs_main.aspx?'+xh				# 构造链接
+	#print url
+	response = urllib2.urlopen(url)  #这里进入main页面
+	text= response.read()
+	#print text
+
+	#print isinstance(text, unicode)
+
+	sr = 'xskbcx.aspx[?]xh=(\d{10})&xm=(\S*)&gnmkdm=(.\d{6})'	#抓取课表链接
+	sr = re.compile(sr)
+	pattern = sr.search(text).group()
+	kb_url = Url +'/'+ pattern
+	#print kb_url
+	response = urllib2.urlopen(kb_url)	#进入 课表
+	text = response.read()
+	#print text
+	print '--------------Course table-------------------'
+	soup = BeautifulSoup(text)  #bs4 网址
+	info = soup.find("table",{"id":"Table1"}).encode('cp936')
+	print info
+
+	#head = soup.find('head').encode('cp936')
+	#print head
+
+
+
+if __name__ == '__main__':
+	if(len(sys.argv) < 2 or len(sys.argv) > 3):
+		tip = ' Usage: python '+sys.argv[0]+' '+'Stu_Number '+ 'passworld'
+		tip.encode('cp936')
+		print  tip
+		exit()
+	else:	
+		_user = sys.argv[1]
+		_pass = sys.argv[2]
+		getCourseTable(_user,_pass)
