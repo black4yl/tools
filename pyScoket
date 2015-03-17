@@ -1,0 +1,36 @@
+/*
+  server: 
+*/
+from socket  import *
+sock = socket(AF_INET,SOCK_STREAM)
+sock.bind(('localhost',7556))
+sock.listen(5)
+while True:
+	connection,address = sock.accept()
+	print 'client ip is'
+	print address
+	try:
+		connection.settimeout(5)
+		buf = connection.recv(1024)
+		if buf == '1':
+			connection.send('welcome to python server !')
+		else:
+			connection.send('please go out!')
+	except socket.timeout:
+		print 'time out'
+	connection.close()
+	
+	/*
+	  client:
+	*/
+	
+#!/usr/bin/env python
+from socket  import *
+sock = socket(AF_INET,SOCK_STREAM)
+sock.connect(('localhost',port))
+a=1024
+while( b=sock.recv(a)):
+	print b
+sock.send('AAAAAAAAAAAAAAAA\x00\x00\x00\x74\x06\x40')
+print sock.recv(a)
+# 115.29.37.180 10086
